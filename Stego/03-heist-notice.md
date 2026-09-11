@@ -1,111 +1,209 @@
 # Kaito CTF - Heist Notice
 
-- Write-Up Author: Ravi
-- Category: Stego
-- Flag: `KAITO{tonights_target_is_the_moonlight_sonata}`
+> **Write-Up Author:** Ravi\
+> **Category:** Stego\
+> **Flag:** `KAITO{tonights_target_is_the_moonlight_sonata}`
 
 ## Challenge Description
 
-> Another advance notice from Kaito Kid, delivered to the Beika Art Museum before the Moonlight Sonata recital.
-> The police read every word. Conan reads what is not printed in ink.
-> **Author: Gojo Satoru**
+> Another advance notice from Kaito Kid, delivered to the Beika Art
+> Museum before the Moonlight Sonata recital. The police read every
+> word. Conan reads what is not printed in ink.\
+> **Author:** Gojo Satoru
 
 ## Analisis
 
-Diberikan sebuah file `.txt` yang berisi teks biasa.
+Diberikan sebuah file `notice.txt` yang berisi teks biasa.
 
-<!-- SCREENSHOT: isi notice.txt -->
-![Isi notice.txt](../assets/03-heist-notice-txt.png)
+Clue utama terdapat pada kalimat:
 
-Clue-nya ada di kalimat:
+> "The police read every word. Conan reads what is not printed in ink."
 
-> *"The police read every word. Conan reads what is not printed in ink."*
+Kalimat tersebut mengarah pada kemungkinan adanya karakter yang tidak
+terlihat atau **zero-width characters** yang disisipkan di antara teks.
 
-Kalimat ini mengarah ke karakter **zero-width** (invisible characters) yang tersembunyi di antara teks. Karakter yang relevan adalah:
+Karakter yang relevan:
 
-- `U+200B` (zero-width space)
-- `U+200C` (zero-width non-joiner)
+-   `U+200B` --- Zero Width Space
+-   `U+200C` --- Zero Width Non-Joiner
 
 ## Langkah Menemukan Flag
 
-1. Buka file `notice.txt` dan deteksi karakter tak terlihat dengan script berikut:
+### 1. Mengecek karakter Unicode tersembunyi
 
-   ```python
-   with open("notice.txt", "r", encoding="utf-8") as f:
-       data = f.read()
+Buat `check.py`:
 
-   for c in data:
-       if ord(c) in (0x200B, 0x200C):
-           print(hex(ord(c)))
-   ```
+``` python
+with open("notice.txt", "r", encoding="utf-8") as f:
+    data = f.read()
 
-   Output:
+for c in data:
+    if ord(c) in (0x200B, 0x200C):
+        print(hex(ord(c)))
+```
 
-   ```
-   0x200b 0x200c 0x200b 0x200b 0x200c 0x200b ...
-   ```
+Jalankan:
 
-2. Ubah karakter zero-width menjadi binary, `U+200B` → `0` dan `U+200C` → `1`:
+``` powershell
+python check.py
+```
 
-   ```python
-   with open("notice.txt", "r", encoding="utf-8") as f:
-       data = f.read()
+Output:
 
-   hidden = ""
+``` text
+0x200b
+0x200c
+0x200b
+0x200b
+0x200c
+0x200b
+...
+```
 
-   for c in data:
-       if c == "\u200b":
-           hidden += "0"
-       elif c == "\u200c":
-           hidden += "1"
+Ini membuktikan bahwa file memiliki karakter Unicode tersembunyi.
 
-   print(hidden)
-   ```
+### 2. Mengubah zero-width characters menjadi binary
 
-   Output binary:
+Gunakan mapping:
 
-   ```
-   010010110100000101001001010101000100111101111011011101000110111101101110011010010110011101101000011101000111001101011111011101000110000101110010011001110110010101110100010111110110100101110011010111110111010001101000011001010101111101101101011011110110111101101110011011000110100101100111011010000111010001011111011100110110111101101110011000010111010001100001011111010000000000000000
-   ```
+``` text
+U+200B → 0
+U+200C → 1
+```
 
-3. Binary tersebut berjumlah **384 bit**; dibagi 8 menjadi **48 byte**. Pecah menjadi kelompok 8-bit lalu konversi ke karakter:
+Buat `extract.py`:
 
-   ```python
-   with open("notice.txt", "r", encoding="utf-8") as f:
-       data = f.read()
+``` python
+with open("notice.txt", "r", encoding="utf-8") as f:
+    data = f.read()
 
-   hidden = ""
+hidden = ""
 
-   for c in data:
-       if c == "\u200b":
-           hidden += "0"
-       elif c == "\u200c":
-           hidden += "1"
+for c in data:
+    if c == "\u200b":
+        hidden += "0"
+    elif c == "\u200c":
+        hidden += "1"
 
-   print("[+] Binary:")
-   print(hidden)
+print(hidden)
+```
 
-   result = ""
+Jalankan:
 
-   for i in range(0, len(hidden), 8):
-       byte = hidden[i:i+8]
+``` powershell
+python extract.py
+```
 
-       if len(byte) == 8:
-           result += chr(int(byte, 2))
+Output berupa binary string panjang:
 
-   print("\n[+] Decoded:")
-   print(result)
-   ```
+``` text
+010010110100000101001001010101000100111101111011...
+```
 
-4. Output script menampilkan flag.
+Payload berjumlah **384 bit**.
 
-   ```
-   [+] Decoded:
-   KAITO{tonights_target_is_the_moonlight_sonata}
-   ```
+### 3. Membagi binary menjadi byte
+
+Karena 1 byte = 8 bit:
+
+``` text
+384 / 8 = 48 byte
+```
+
+Contoh kelompok binary:
+
+``` text
+01001011
+01000001
+01001001
+01010100
+01001111
+01111011
+...
+```
+
+Contoh konversi:
+
+``` text
+01001011 → 75 → K
+01000001 → 65 → A
+01001001 → 73 → I
+01010100 → 84 → T
+01001111 → 79 → O
+```
+
+### 4. Decode binary menjadi ASCII
+
+Script lengkap:
+
+``` python
+with open("notice.txt", "r", encoding="utf-8") as f:
+    data = f.read()
+
+hidden = ""
+
+for c in data:
+    if c == "\u200b":
+        hidden += "0"
+    elif c == "\u200c":
+        hidden += "1"
+
+print("[+] Binary:")
+print(hidden)
+
+result = ""
+
+for i in range(0, len(hidden), 8):
+    byte = hidden[i:i+8]
+
+    if len(byte) == 8:
+        result += chr(int(byte, 2))
+
+print("\n[+] Decoded:")
+print(result)
+```
+
+Jalankan:
+
+``` powershell
+python extract.py
+```
+
+Output:
+
+``` text
+[+] Decoded:
+KAITO{tonights_target_is_the_moonlight_sonata}
+```
 
 ## Kesimpulan
 
-Pesan rahasia disembunyikan menggunakan teknik steganografi zero-width characters pada teks. Karakter `U+200B` dan `U+200C` dipetakan ke bit `0` dan `1`, lalu hasilnya didecode sebagai teks ASCII.
+Challenge ini menggunakan **steganografi zero-width characters**.
+Karakter `U+200B` dan `U+200C` dipetakan menjadi bit `0` dan `1`,
+kemudian binary tersebut dibagi menjadi byte dan dikonversi ke ASCII.
 
-**Flag:** `KAITO{tonights_target_is_the_moonlight_sonata}`
+``` text
+notice.txt
+    │
+    ▼
+U+200B / U+200C
+    │
+    ▼
+0 / 1
+    │
+    ▼
+Binary
+    │
+    ▼
+8-bit bytes
+    │
+    ▼
+ASCII
+    │
+    ▼
+KAITO{tonights_target_is_the_moonlight_sonata}
+```
+
+**Flag:**
+
+`KAITO{tonights_target_is_the_moonlight_sonata}`

@@ -6,30 +6,64 @@
 
 ## Challenge Description
 
-> Kaito Kid escaped the rooftop inside a cocoon of smoke — one of five charges deployed that night.
-> Four are empty misdirection. One carries what he left behind.
+Kaito Kid escaped the rooftop inside a **cocoon of smoke** — one of five charges deployed that night.
+
+Four are empty misdirection. One carries what he left behind.
+
+Author: Gojo Satoru
+
+File yang diberikan: `smoke-screen.zip`, berisi 5 file `.bin` (`cocoon_1.bin` s/d `cocoon_5.bin`).
 
 ## Analisis
 
-Diberikan lima file `cocoon`. Empat di antaranya hanya pengalih perhatian, satu file berisi data yang ditinggalkan Kaito Kid.
+Setelah diekstrak, kelima file terlihat serupa sekilas — sama-sama file `.bin` tanpa ekstensi yang jelas. Namun deskripsi soal memberi petunjuk kuat: dari 5 "cocoon", 4 di antaranya cuma misdirection (kosong/noise), dan hanya 1 yang menyimpan data asli.
 
-<!-- SCREENSHOT: 5 file cocoon -->
-![File cocoon](../assets/07-smoke-screen-files.png)
+Langkah pertama adalah membandingkan ukuran file secara presisi:
+
+```
+cocoon_1.bin   132 bytes
+cocoon_2.bin   132 bytes
+cocoon_3.bin    92 bytes   <- beda sendiri
+cocoon_4.bin   132 bytes
+cocoon_5.bin   132 bytes
+```
+
+`cocoon_3.bin` langsung mencurigakan karena ukurannya berbeda dari 4 file lainnya.
+
+Untuk memastikan, dilakukan hex dump pada semua file. File `cocoon_1.bin`, `cocoon_2.bin`, `cocoon_4.bin`, dan `cocoon_5.bin` punya pola yang sama: 32 byte pertama berupa random bytes (header dummy), lalu sisanya diisi penuh string berulang `NOISENOISENOISE...` — jelas ini cuma filler/junk data.
+
+Sedangkan `cocoon_3.bin` berbeda: 32 byte pertama tetap random bytes, tapi setelah itu langsung diikuti teks ASCII:
+
+```
+eJzzdvQM8a9Ozk/Oz8+Lz0+LL87Nz06NT8/MSUlNiU8tTk4sSK0FAP8lDjw=
+```
+
+Prefix `eJz` adalah ciri khas base64 dari data yang dikompresi dengan **zlib** (byte pertama hasil zlib compress hampir selalu `0x78`, yang jika di-base64-kan menghasilkan awalan `eJ`). Ini mengonfirmasi bahwa `cocoon_3.bin` adalah cocoon yang menyimpan flag.
 
 ## Langkah Menemukan Flag
 
-1. **Periksa ukuran tiap file** untuk menemukan anomali. File yang berisi flag biasanya berukuran berbeda dari empat file kosong lainnya.
+1. **Ekstrak ZIP** dan cek ukuran tiap file untuk menemukan anomali:
 
-   <!-- SCREENSHOT: ukuran file, cocoon_3.bin berbeda -->
-   ![Ukuran file cocoon_3.bin](../assets/07-smoke-screen-size.png)
+   ```
+   Get-ChildItem cocoon_*.bin | Select-Object Name, Length
+   ```
 
-2. **Hex dump** file yang mencurigakan (`cocoon_3.bin`) untuk melihat strukturnya.
+   Hasil menunjukkan `cocoon_3.bin` (92 byte) berbeda dari 4 file lain (132 byte).
 
-   <!-- SCREENSHOT: hexdump cocoon_3.bin -->
-   ![Hexdump cocoon_3.bin](../assets/07-smoke-screen-hexdump.png)
+2. **Hex dump / baca isi mentah** `cocoon_3.bin` untuk konfirmasi:
 
-3. Dari hasil analisis, `cocoon_3.bin` memiliki **32 byte noise header** di awal, lalu diikuti data base64 yang terkompresi zlib.
-4. Tulis script Python untuk decode:
+   ```python
+   data = open('cocoon_3.bin', 'rb').read()
+   for i in range(0, len(data), 16):
+       chunk = data[i:i+16]
+       hexpart = ' '.join(f'{b:02x}' for b in chunk)
+       ascii_part = ''.join(chr(b) if 32 <= b < 127 else '.' for b in chunk)
+       print(f'{i:06x}  {hexpart:<48}  {ascii_part}')
+   ```
+
+   32 byte pertama noise, diikuti teks ASCII berawalan `eJz` — indikasi base64 dari data zlib.
+
+3. **Decode base64**, lalu **decompress zlib** untuk memulihkan flag:
 
    ```python
    import base64, zlib
@@ -40,10 +74,14 @@ Diberikan lima file `cocoon`. Empat di antaranya hanya pengalih perhatian, satu 
    print(flag)
    ```
 
-5. Jalankan script untuk mendapatkan flag.
+   Output:
+
+   ```
+   b'KAITO{cocoon_of_smoke_gilded_escape}'
+   ```
 
 ## Kesimpulan
 
-File `cocoon_3.bin` menyimpan payload base64 yang terkompresi zlib di belakang header noise 32 byte. Dengan menghapus header lalu melakukan base64-decode dan dekompresi, flag dapat dipulihkan.
+Dari 5 file cocoon, 4 di antaranya hanyalah random bytes yang dipadatkan dengan string berulang `NOISE` sebagai misdirection. Hanya `cocoon_3.bin` yang menyimpan data asli, dibedakan lewat ukuran filenya yang unik. Data asli tersebut disimpan sebagai base64 dari hasil kompresi zlib, sehingga cukup di-decode lalu di-decompress untuk mendapatkan flag.
 
 **Flag:** `KAITO{cocoon_of_smoke_gilded_escape}`
