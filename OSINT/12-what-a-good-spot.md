@@ -14,7 +14,7 @@
 
 ## Analisis
 
-Diberikan sebuah foto tanpa informasi lokasi. Targetnya adalah menemukan koordinat sebuah "toilet" — gubuk kayu yang ditempel di sisi jembatan rel di atas air. Ini challenge OSINT geolocation murni: semua jawaban ada di dalam foto.
+Diberikan sebuah foto tanpa informasi lokasi. Targetnya adalah menemukan koordinat sebuah "toilet" — gubuk kayu yang ditempel di sisi jembatan rel di atas air. 
 
 ## Langkah Menemukan Flag
 
