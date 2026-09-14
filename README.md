@@ -17,11 +17,12 @@ Writeup CTF **Kaito** oleh Ravi & Raihan Taufik, disusun per kategori.
 | 9 | He's Not Findable | [Crypto](Crypto/09-hes-not-findable.md) | ★★★★☆ | `Kaito{c3ntr4l_f1n1t3_curv3_hnp_l4tt1c3_c137}` |
 | 10 | The Omega Trigger | [Crypto](Crypto/10-the-omega-trigger.md) | ★★★★☆ | `Kaito{0m3g4_d3v1c3_matsumoto_imai_patarin_differential}` |
 | 11 | The Berglas Effect | [Reverse](Reverse/11-berglas.md) | ★★★★☆ | `KAITO{any_card_any_number_no_method_known}` |
+| 12 | What a Good Spot | [OSINT](OSINT/12-what-a-good-spot.md) | ★★★☆☆ | `Kaito{55.994,-3.385}` |
 
 ## Statistik
 
-- **Solved:** 11 challenge
-- **Kategori:** Beginner, Stego, Web, Reverse, Misc, Forensic, Crypto
+- **Solved:** 12 challenge
+- **Kategori:** Beginner, Stego, Web, Reverse, Misc, Forensic, Crypto, OSINT
 - **Belum lengkap:** TarSnap Archive (langkah + flag), Pizza Syndicate (deskripsi + langkah)
 
 ## Struktur Folder
@@ -37,7 +38,8 @@ Kaito-CTF/
 ├── Reverse/
 ├── Misc/
 ├── Forensic/
-└── Crypto/
+├── Crypto/
+└── OSINT/
 ```
 
 ## Konvensi Gambar
