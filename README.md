@@ -1,6 +1,6 @@
 # KAITO'S CTF 2026 — Writeup
 
-Writeup CTF **Kaito** oleh Ravi, Raihan Taufik, dan reybong, disusun per kategori.
+Writeup CTF **Kaito** oleh Ravi, Raihan Taufik,disusun per kategori.
 
 ## Daftar Challenge
 
