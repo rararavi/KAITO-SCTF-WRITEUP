@@ -48,7 +48,6 @@ Diberikan sebuah foto tanpa informasi lokasi. Targetnya adalah menemukan koordin
 7. Format sesuai flag format (3 desimal) → flag.
 
 ## Kesimpulan
-
-Challenge ini murni geolocation OSINT. Foto diidentifikasi lewat Google Lens, diverifikasi dengan mencocokkan detail visual pada Google Maps/Earth, lalu koordinat DMS dikonversi ke desimal sesuai format flag.
+Foto diidentifikasi lewat Google Lens, diverifikasi dengan mencocokkan detail visual pada Google Maps/Earth, lalu koordinat DMS dikonversi ke desimal sesuai format flag.
 
 **Flag:** `Kaito{55.994,-3.385}`
